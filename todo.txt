@@ -1,0 +1,24 @@
+📌 p31 - Foto del ejecutivo 📸
+Añadir a la tabla ejecutivo el campo fot_eje, tipo VARCHAR(500), que alojará el nombre del archivo. Cuya guía y gestión, recién se actualizó en:
+https://github.com/ericorps1/sicam-erp/blob/main/README.md
+Se requiere que desde el CRUD de los ejecutivos se pueda en el formulario añadir una imagen, teniendo un preview encima del los campos en un elemento tipo <img> para identificar la cuenta. Permitiendo un máximo de 40MB por archivo máximo, y formatos permitidos .jpeg, .jpg o .png 🖼
+
+📌 p32 - Card de resumen de ejecutivo 👤
+Se necesita que la imagen asociada a cada ejecutivo aparezca en reemplazo del pequeño ícono que sale en la visualización de cada nodo del árbol. Y que al hacer clic se desplegue una pequeña tarjeta con un resumen-preview de la información; nombre, semáforo, última sesión, estatus de sus citas del día, responsable inmediato (nodo padre) así como la imagen con un tamaño mayor (similar al card-preview de un perfil en FB o IG al hacer un mouseover en la foto de alguna cuenta) 💳
+
+📌 p33 - Problemática Correctiva de fotos en SICAM ⚠
+Actualmente en la versión productiva de SICAM, en el apartado de los Árboles y Planteles, dado que se han llegado a tener demasiadas cuentas operando al mismo tiempo, el despliegue actual es deficiente.
+Ambientación - Pruebas de estrés (stress test) 🔥
+Para probar este escenario se necesitan añadir 4 planteles más:
+plantel
+id_pla    nom_pla
+------    -----------
+8         Querétaro
+9         Pachuca
+13        San Luis Potosí
+16        CDMX Portales
+Y añadir 10 ejecutivos a cada plantel, cada uno con imágenes pesadas (+30MB a 40MB) 💾.
+Realizar un par de pruebas de despliegue para confirmar dicha demora ⏱.
+NOTA
+El motivo por el cuál no se le solicita a los usuarios que suban imágenes comprimidas es porque no saben hacer eso. 🤷‍♂
+Se necesita una forma óptima de cargar dicho módulo ⚡.
