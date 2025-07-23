@@ -441,6 +441,120 @@
             background-color: #563d7c;
             transform: scale(1.05);
         }
+        
+        /* P32 - Card de resumen de ejecutivo */
+        .ejecutivo-card {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 320px;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .ejecutivo-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .ejecutivo-card-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #007bff;
+            background-color: #f8f9fa;
+            background-size: cover;
+            background-position: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .ejecutivo-card-avatar.default {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007bff;
+            font-size: 20px;
+        }
+        
+        .ejecutivo-card-info h6 {
+            margin: 0 0 4px 0;
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .ejecutivo-card-info small {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .ejecutivo-card-body {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .ejecutivo-card-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .ejecutivo-card-label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .ejecutivo-card-value {
+            color: #333;
+            text-align: right;
+        }
+        
+        .semaforo-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .semaforo-verde { background-color: #d4edda; color: #155724; }
+        .semaforo-amarillo { background-color: #fff3cd; color: #856404; }
+        .semaforo-rojo { background-color: #f8d7da; color: #721c24; }
+        .semaforo-sin-sesion { background-color: #f8f9fa; color: #6c757d; }
+        
+        .ejecutivo-card::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid white;
+        }
+        
+        .ejecutivo-card::after {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -972,6 +1086,25 @@
                 habilitarBotones();
             });
             
+            // P32 - Evento de clic en icono/imagen de ejecutivo para mostrar card
+            $('#jstree').on('click', '.jstree-icon', function(e) {
+                e.stopPropagation();
+                var nodeElement = $(this).closest('.jstree-node');
+                var nodeId = nodeElement.attr('id');
+                var ejecutivo = ejecutivos.find(ej => ej.id_eje == nodeId);
+                
+                if (ejecutivo) {
+                    mostrarCardEjecutivo(ejecutivo, e);
+                }
+            });
+            
+            // Cerrar card al hacer clic fuera
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.ejecutivo-card, .jstree-icon').length) {
+                    $('.ejecutivo-card').hide();
+                }
+            });
+            
             // Evento de drag & drop completado
             $('#jstree').on('move_node.jstree', function (e, data) {
                 var nodoMovido = data.node;
@@ -1084,6 +1217,118 @@
             $('#ejecutivosActivos').text(activos);
             $('#ejecutivosOcultos').text(ocultos);
             $('#nodosRaiz').text(raiz);
+        }
+        
+        // =====================================
+        // P32 - CARD DE RESUMEN DE EJECUTIVO
+        // =====================================
+        
+        function mostrarCardEjecutivo(ejecutivo, event) {
+            // Ocultar cualquier card existente
+            $('.ejecutivo-card').remove();
+            
+            // Buscar información del padre
+            var padre = ejecutivos.find(e => e.id_eje == ejecutivo.id_padre);
+            var nombrePadre = padre ? padre.nom_eje : 'Sin responsable (Raíz)';
+            
+            // Calcular información del semáforo
+            var semaforoInfo = '';
+            var semaforoClass = '';
+            
+            switch(ejecutivo.semaforo_sesion) {
+                case 'verde':
+                    semaforoClass = 'semaforo-verde';
+                    semaforoInfo = 'Sesión reciente (≤1 día)';
+                    break;
+                case 'amarillo':
+                    semaforoClass = 'semaforo-amarillo';
+                    semaforoInfo = 'Sesión reciente (2-3 días)';
+                    break;
+                case 'rojo':
+                    semaforoClass = 'semaforo-rojo';
+                    semaforoInfo = 'Sesión antigua (≥4 días)';
+                    break;
+                default:
+                    semaforoClass = 'semaforo-sin-sesion';
+                    semaforoInfo = 'Sin registro de sesión';
+            }
+            
+            // Formatear última sesión
+            var ultimaSesion = ejecutivo.ult_eje ? 
+                new Date(ejecutivo.ult_eje).toLocaleDateString('es-ES') + ' ' + new Date(ejecutivo.ult_eje).toLocaleTimeString('es-ES') : 
+                'Nunca';
+            
+            // Crear avatar del ejecutivo
+            var avatarHtml = '';
+            if (ejecutivo.fot_eje) {
+                avatarHtml = `<div class="ejecutivo-card-avatar" style="background-image: url('uploads/${ejecutivo.fot_eje}')"></div>`;
+            } else {
+                avatarHtml = `<div class="ejecutivo-card-avatar default"><i class="fas fa-user"></i></div>`;
+            }
+            
+            // Crear el card HTML
+            var cardHtml = `
+                <div class="ejecutivo-card">
+                    <div class="ejecutivo-card-header">
+                        ${avatarHtml}
+                        <div class="ejecutivo-card-info">
+                            <h6>${ejecutivo.nom_eje}</h6>
+                            <small>${ejecutivo.tel_eje}</small>
+                        </div>
+                    </div>
+                    <div class="ejecutivo-card-body">
+                        <div class="ejecutivo-card-row">
+                            <span class="ejecutivo-card-label">Estado:</span>
+                            <span class="ejecutivo-card-value">
+                                <span class="badge badge-${ejecutivo.eli_eje == 1 ? 'success' : 'danger'}">
+                                    ${ejecutivo.eli_eje == 1 ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="ejecutivo-card-row">
+                            <span class="ejecutivo-card-label">Sesión:</span>
+                            <span class="ejecutivo-card-value">
+                                <span class="semaforo-badge ${semaforoClass}">${semaforoInfo}</span>
+                            </span>
+                        </div>
+                        <div class="ejecutivo-card-row">
+                            <span class="ejecutivo-card-label">Última conexión:</span>
+                            <span class="ejecutivo-card-value">${ultimaSesion}</span>
+                        </div>
+                        <div class="ejecutivo-card-row">
+                            <span class="ejecutivo-card-label">Responsable:</span>
+                            <span class="ejecutivo-card-value">${nombrePadre}</span>
+                        </div>
+                        <div class="ejecutivo-card-row">
+                            <span class="ejecutivo-card-label">Citas del día:</span>
+                            <span class="ejecutivo-card-value">
+                                <span class="badge badge-primary">${ejecutivo.citas_propias || 0}</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar el card al DOM
+            $('body').append(cardHtml);
+            
+            // Posicionar el card cerca del clic
+            var card = $('.ejecutivo-card');
+            var x = event.pageX + 10;
+            var y = event.pageY - 10;
+            
+            // Ajustar posición si se sale de la pantalla
+            if (x + card.outerWidth() > $(window).width()) {
+                x = event.pageX - card.outerWidth() - 10;
+            }
+            if (y + card.outerHeight() > $(window).height()) {
+                y = event.pageY - card.outerHeight() + 10;
+            }
+            
+            card.css({
+                'left': x + 'px',
+                'top': y + 'px'
+            }).fadeIn(200);
         }
         
         // =====================================

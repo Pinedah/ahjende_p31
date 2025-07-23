@@ -624,7 +624,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			}
 			
 			// Obtener todos los ejecutivos con conteo de citas particulares
-			$query = "SELECT e.id_eje, e.nom_eje, e.tel_eje, e.eli_eje, e.id_padre, e.id_pla, e.ult_eje,
+			$query = "SELECT e.id_eje, e.nom_eje, e.tel_eje, e.fot_eje, e.eli_eje, e.id_padre, e.id_pla, e.ult_eje,
 					         p.nom_pla as plantel_principal,
 					         COUNT(DISTINCT c.id_cit) as citas_propias,
 					         GROUP_CONCAT(DISTINCT CONCAT(pa.id_pla, ':', pa.nom_pla) SEPARATOR '|') as planteles_asociados,
@@ -642,7 +642,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					  LEFT JOIN cita c ON e.id_eje = c.id_eje2 AND c.eli_cit = 1 $condicion_fecha
 					  LEFT JOIN planteles_ejecutivo pe ON e.id_eje = pe.id_eje
 					  LEFT JOIN plantel pa ON pe.id_pla = pa.id_pla
-					  GROUP BY e.id_eje, e.nom_eje, e.tel_eje, e.eli_eje, e.id_padre, e.id_pla, e.ult_eje, p.nom_pla
+					  GROUP BY e.id_eje, e.nom_eje, e.tel_eje, e.fot_eje, e.eli_eje, e.id_padre, e.id_pla, e.ult_eje, p.nom_pla
 					  ORDER BY e.eli_eje DESC, e.nom_eje ASC";
 			
 			// Log para debugging
