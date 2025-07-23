@@ -875,7 +875,7 @@
         // Inicialización
         $(document).ready(function() {
             aplicarFiltrosDesdeURL();
-            cargarEjecutivos();
+            cargarEjecutivos(true); // Limpiar selección en la carga inicial
             configurarEventos();
         });
         
@@ -910,7 +910,14 @@
         // FUNCIONES DE CARGA DE DATOS
         // =====================================
         
-        function cargarEjecutivos() {
+        function cargarEjecutivos(limpiarSeleccion = false) {
+            // Solo limpiar estado de selección si se solicita explícitamente
+            if (limpiarSeleccion) {
+                nodoSeleccionado = null;
+                $('#nodoSeleccionadoInfo').hide();
+                $('#btnEditar, #btnToggle, #btnMover').prop('disabled', true);
+            }
+            
             // Obtener fechas de filtro
             var fechaInicio = $('#fechaInicio').val();
             var fechaFin = $('#fechaFin').val();
@@ -940,6 +947,15 @@
                         console.log('Ejecutivos:', ejecutivos);
                         actualizarEstadisticas();
                         generarArbolJsTree();
+                        
+                        // Si hay un nodo seleccionado, actualizar sus datos
+                        if (nodoSeleccionado) {
+                            var ejecutivoActualizado = ejecutivos.find(e => e.id_eje == nodoSeleccionado.id);
+                            if (ejecutivoActualizado) {
+                                nodoSeleccionado.data = ejecutivoActualizado;
+                                mostrarInformacionNodo(ejecutivoActualizado);
+                            }
+                        }
                     } else {
                         alert('Error al cargar ejecutivos: ' + response.message);
                     }
@@ -1187,6 +1203,11 @@
             // Preview al seleccionar imagen
             $("#fot_eje").change(function() {
                 mostrarPreview(this);
+            });
+            
+            // Limpiar formulario cuando se cierre el modal
+            $('#modalEjecutivo').on('hidden.bs.modal', function () {
+                limpiarFormulario();
             });
             
             // Evento de selección de nodo
@@ -1453,6 +1474,10 @@
         // =====================================
         
         function mostrarModalCrear() {
+            // Resetear SOLO el formulario y estado de edición
+            $('#formEjecutivo')[0].reset();
+            $('#preview').hide();
+            
             modoEdicion = false;
             $('#modalTitulo').text('Crear Nuevo Ejecutivo');
             $('#ejecutivoId').val('');
@@ -1463,6 +1488,9 @@
             // Limpiar preview de imagen
             $('#fot_eje').val('');
             $('#preview').hide();
+            
+            // Restablecer texto del botón
+            $('.btn-primary').text('Guardar');
             
             // Establecer padre seleccionado si hay uno
             if(nodoSeleccionado) {
@@ -1479,6 +1507,10 @@
         function mostrarModalEditar() {
             if(!nodoSeleccionado) return;
             
+            // Resetear SOLO el formulario, NO el nodoSeleccionado
+            $('#formEjecutivo')[0].reset();
+            $('#preview').hide();
+            
             modoEdicion = true;
             var ejecutivo = nodoSeleccionado.data;
             
@@ -1487,6 +1519,9 @@
             $('#ejecutivoNombre').val(ejecutivo.nom_eje);
             $('#ejecutivoTelefono').val(ejecutivo.tel_eje);
             $('#ejecutivoActivo').prop('checked', ejecutivo.eli_eje == 1);
+            
+            // Restablecer texto del botón para edición
+            $('.btn-primary').text('Actualizar');
             
             // Mostrar foto actual si existe
             if(ejecutivo.fot_eje) {
@@ -1594,7 +1629,8 @@
                     if (response.success) {
                         $('#modalEjecutivo').modal('hide');
                         alert(response.message);
-                        limpiarFormulario();
+                        
+                        // Recargar datos manteniendo la selección actual
                         cargarEjecutivos();
                     } else {
                         alert('Error: ' + response.message);
@@ -1604,7 +1640,9 @@
                     alert('Error de conexión');
                 },
                 complete: function() {
-                    $('.btn-primary').prop('disabled', false).text('Guardar');
+                    // Restaurar el texto correcto del botón según el modo
+                    var textoBoton = modoEdicion ? 'Actualizar' : 'Guardar';
+                    $('.btn-primary').prop('disabled', false).text(textoBoton);
                 }
             });
         }
@@ -1627,6 +1665,38 @@
         function limpiarFormulario() {
             $('#formEjecutivo')[0].reset();
             $('#preview').hide();
+            
+            // NO resetear nodoSeleccionado aquí - mantener la selección
+            // Solo resetear el estado del modal
+            modoEdicion = false;
+            
+            // Resetear el botón de guardar a su estado original
+            $('.btn-primary').prop('disabled', false).text('Guardar');
+            
+            // Resetear título del modal
+            $('#modalTitulo').text('Crear Ejecutivo');
+        }
+        
+        // Función específica para recargar el árbol
+        function recargarArbol() {
+            cargarEjecutivos(true); // Limpiar selección al recargar manualmente
+        }
+        
+        // Función para recargar preservando la selección actual
+        function recargarArbolConSeleccion() {
+            var idSeleccionado = nodoSeleccionado ? nodoSeleccionado.id : null;
+            
+            cargarEjecutivos();
+            
+            // Restaurar selección después de recargar
+            if (idSeleccionado) {
+                setTimeout(function() {
+                    var nodo = $('#jstree').jstree('get_node', idSeleccionado);
+                    if (nodo) {
+                        $('#jstree').jstree('select_node', nodo);
+                    }
+                }, 500);
+            }
         }
         
         function toggleEstado() {
