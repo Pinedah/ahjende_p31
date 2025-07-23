@@ -1602,7 +1602,6 @@
             formData.append('nom_eje', $('#ejecutivoNombre').val().trim());
             formData.append('tel_eje', $('#ejecutivoTelefono').val().trim());
             
-            // Corregir el envío del id_padre - no enviar 'null' como string
             var idPadre = $('#ejecutivoPadre').val();
             if (idPadre && idPadre !== '' && idPadre !== 'null') {
                 formData.append('id_padre', idPadre);

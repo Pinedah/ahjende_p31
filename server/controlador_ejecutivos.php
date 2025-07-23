@@ -188,7 +188,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			$nom_eje = escape($_POST['nom_eje'], $connection);
 			$tel_eje = escape($_POST['tel_eje'], $connection);
 			$id_padre = isset($_POST['id_padre']) && $_POST['id_padre'] !== '' && $_POST['id_padre'] !== 'null' ? escape($_POST['id_padre'], $connection) : null;
-			$id_pla = isset($_POST['id_pla']) && $_POST['id_pla'] !== '' && $_POST['id_pla'] !== 'null' ? escape($_POST['id_pla'], $connection) : null;
+			// Solo actualizar plantel si se envía explícitamente, de lo contrario conservar el actual
+			$actualizar_plantel = isset($_POST['id_pla']);
+			$id_pla = $actualizar_plantel && $_POST['id_pla'] !== '' && $_POST['id_pla'] !== 'null' ? escape($_POST['id_pla'], $connection) : null;
+			
 			$eli_eje = isset($_POST['eli_eje']) ? intval($_POST['eli_eje']) : 1;
 			
 			// Validaciones backend
@@ -239,7 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			}
 			
 			// Actualizar datos básicos
-			$query = "UPDATE ejecutivo SET nom_eje = '$nom_eje', tel_eje = '$tel_eje', eli_eje = $eli_eje, id_padre = " . ($id_padre ? "'$id_padre'" : "NULL") . ", id_pla = " . ($id_pla ? "'$id_pla'" : "NULL") . " WHERE id_eje = '$id_eje'";
+			$query = "UPDATE ejecutivo SET nom_eje = '$nom_eje', tel_eje = '$tel_eje', eli_eje = $eli_eje, id_padre = " . ($id_padre ? "'$id_padre'" : "NULL");
+			
+			// Solo actualizar plantel si se envió explícitamente
+			if($actualizar_plantel) {
+				$query .= ", id_pla = " . ($id_pla ? "'$id_pla'" : "NULL");
+			}
+			
+			$query .= " WHERE id_eje = '$id_eje'";
 			
 			if(!mysqli_query($connection, $query)) {
 				echo respuestaError('Error al actualizar ejecutivo');
@@ -306,7 +316,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				$padre_nuevo = $id_padre ? $id_padre : '(sin padre)';
 				$cambios[] = "ID_PADRE de '$padre_ant' a '$padre_nuevo'";
 			}
-			if($datosAnt['id_pla'] != $id_pla) {
+			// Solo registrar cambio de plantel si se actualizó explícitamente
+			if($actualizar_plantel && $datosAnt['id_pla'] != $id_pla) {
 				$pla_ant = $datosAnt['id_pla'] ? $datosAnt['id_pla'] : '(sin plantel)';
 				$pla_nuevo = $id_pla ? $id_pla : '(sin plantel)';
 				$cambios[] = "ID_PLA de '$pla_ant' a '$pla_nuevo'";

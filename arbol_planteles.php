@@ -168,6 +168,48 @@
             background-position: center !important;
         }
         
+        /* Estilos específicos para imágenes reemplazadas */
+        .jstree-default .jstree-anchor img.ejecutivo-imagen {
+            vertical-align: middle;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        /* Prevenir herencia de imágenes completamente - cada nodo debe ser independiente */
+        .jstree-anchor {
+            background-image: none !important;
+        }
+        
+        /* Solo ocultar íconos Font Awesome específicos cuando hay imagen personalizada en ESE nodo específico */
+        .jstree-anchor:has(.ejecutivo-imagen) .jstree-icon.fas {
+            display: none !important;
+        }
+        
+        /* Asegurar que las imágenes de ejecutivos siempre sean visibles y no se hereden */
+        .jstree-anchor .ejecutivo-imagen {
+            display: inline-block !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        /* Prevenir que los estilos de background-image se apliquen a nodos sin imagen propia */
+        .jstree-default .jstree-anchor .jstree-icon {
+            background-image: none !important;
+        }
+        
+        /* Asegurar prioridad de las imágenes sobre íconos en nodos raíz */
+        .jstree-root-level .ejecutivo-imagen {
+            display: inline-block !important;
+            visibility: visible !important;
+            z-index: 15 !important;
+        }
+        
+        /* Ocultar íconos cuando hay imagen en nodos raíz específicamente */
+        .jstree-root-level:has(.ejecutivo-imagen) .jstree-icon {
+            display: none !important;
+        }
+        
         /* Sangría y líneas de conexión jerárquicas mejoradas */
         .jstree-default .jstree-children {
             margin-left: 40px;
@@ -1200,6 +1242,11 @@
                 // Regenerar los árboles para mostrar cambios
                 generarArbolesPorPlantel();
                 
+                // Reaplicar imágenes después de regenerar por WebSocket
+                setTimeout(function() {
+                    aplicarImagenesEjecutivos();
+                }, 100);
+                
                 // Aplicar feedback visual
                 aplicarFeedbackVisualEjecutivo(mensaje.id_eje, mensaje.campo);
                 
@@ -1242,6 +1289,11 @@
                 // Regenerar los árboles para mostrar cambios INMEDIATAMENTE
                 generarArbolesPorPlantel();
                 
+                // Reaplicar imágenes después de regenerar por movimiento WebSocket
+                setTimeout(function() {
+                    aplicarImagenesEjecutivos();
+                }, 100);
+                
                 // Aplicar feedback visual específico para movimiento - INMEDIATO SIN DELAY
                 aplicarFeedbackVisualEjecutivo(mensaje.id_eje, 'movimiento');
                 
@@ -1264,6 +1316,11 @@
                 
                 // Regenerar los árboles para mostrar cambios
                 generarArbolesPorPlantel();
+                
+                // Reaplicar imágenes después de regenerar por cambio de estado WebSocket
+                setTimeout(function() {
+                    aplicarImagenesEjecutivos();
+                }, 100);
                 
                 // Aplicar feedback visual
                 aplicarFeedbackVisualEjecutivo(mensaje.id_eje, 'estado');
@@ -1388,6 +1445,11 @@
                 
                 // Regenerar todos los árboles para mostrar cambios INMEDIATAMENTE
                 generarArbolesPorPlantel();
+                
+                // Reaplicar imágenes después de regenerar por cambio de plantel WebSocket
+                setTimeout(function() {
+                    aplicarImagenesEjecutivos();
+                }, 100);
                 
                 // Recargar conteos de citas porque cambió la distribución
                 cargarCitasPorPlantel();
@@ -1591,6 +1653,28 @@
                     });
                     
                     generarArbolesPorPlantel();
+                    
+                    // Aplicar imágenes después de generar los árboles con múltiples intentos
+                    setTimeout(function() {
+                        console.log('🕐 CARGA INICIAL - Aplicando imágenes (500ms)');
+                        aplicarImagenesEjecutivos();
+                    }, 500);
+                    
+                    setTimeout(function() {
+                        console.log('🕐 CARGA INICIAL - Aplicando imágenes (1000ms)');
+                        aplicarImagenesEjecutivos();
+                    }, 1000);
+                    
+                    setTimeout(function() {
+                        console.log('🕐 CARGA INICIAL - Aplicando imágenes (2000ms)');
+                        aplicarImagenesEjecutivos();
+                    }, 2000);
+                    
+                    setTimeout(function() {
+                        console.log('🕐 CARGA INICIAL - Aplicando imágenes (3000ms)');
+                        aplicarImagenesEjecutivos();
+                    }, 3000);
+                    
                     actualizarEstadisticas();
                 } else {
                     console.error('Error ejecutivos:', response.message);
@@ -1683,17 +1767,426 @@
             });
         }
         
+        // Función de debug para verificar ejecutivos con fotos
+        function debugEjecutivosConFotos() {
+            console.log('🔍 ==== DEBUG EJECUTIVOS CON FOTOS ====');
+            console.log('Total ejecutivos cargados:', ejecutivos.length);
+            
+            var ejecutivosConFoto = ejecutivos.filter(ej => ej.fot_eje && ej.fot_eje.trim() !== '');
+            console.log('Ejecutivos con foto:', ejecutivosConFoto.length);
+            
+            ejecutivosConFoto.forEach(ej => {
+                console.log('📷 Ejecutivo:', ej.nom_eje);
+                console.log('   - ID:', ej.id_eje);
+                console.log('   - Foto:', ej.fot_eje);
+                console.log('   - Plantel:', ej.id_pla);
+                console.log('   - Archivo ruta:', 'uploads/' + ej.fot_eje);
+                
+                // Probar carga de imagen para verificar que existe
+                var testImg = new Image();
+                testImg.onload = function() {
+                    console.log('   - ✅ Imagen EXISTE y se puede cargar:', ej.fot_eje);
+                };
+                testImg.onerror = function() {
+                    console.log('   - ❌ Imagen NO EXISTE o no se puede cargar:', ej.fot_eje);
+                };
+                testImg.src = 'uploads/' + ej.fot_eje;
+                
+                // Verificar si el elemento está en el DOM
+                var nodoEncontrado = $('[id="' + ej.id_eje + '"]');
+                console.log('   - Nodo en DOM:', nodoEncontrado.length);
+                
+                if (nodoEncontrado.length > 0) {
+                    var anchor = nodoEncontrado.find('.jstree-anchor');
+                    console.log('   - Anchor encontrado:', anchor.length);
+                    var imagen = anchor.find('.ejecutivo-imagen');
+                    console.log('   - Imagen ya aplicada:', imagen.length);
+                    var icono = anchor.find('.jstree-icon');
+                    console.log('   - Ícono presente:', icono.length);
+                } else {
+                    console.log('   - ❌ NODO NO ENCONTRADO EN DOM');
+                }
+            });
+            
+            // Verificar todos los nodos en DOM por plantel
+            $('.plantel-tree').each(function(index) {
+                var plantelTree = $(this);
+                var plantelContainer = plantelTree.closest('.plantel-container');
+                var plantelId = plantelContainer.data('plantel-id');
+                console.log('🌳 PLANTEL ID:', plantelId, '- Árbol #', index);
+                
+                var todosLosNodos = plantelTree.find('.jstree-node');
+                console.log('   - Nodos jsTree en este plantel:', todosLosNodos.length);
+                
+                todosLosNodos.each(function() {
+                    var id = $(this).attr('id');
+                    var texto = $(this).find('.jstree-anchor').text().trim();
+                    console.log('   - Nodo ID:', id, 'Texto:', texto);
+                });
+            });
+            
+            // También verificar si jsTree está inicializado
+            $('.plantel-tree').each(function(index) {
+                var jstreeInstance = $(this).jstree(true);
+                if (jstreeInstance) {
+                    console.log('🌳 jsTree INSTANCIA #', index, '- Estado:', 'INICIALIZADO');
+                    var nodes = jstreeInstance.get_json('#', {flat: true});
+                    console.log('   - Nodos desde jsTree API:', nodes.length);
+                    nodes.forEach(function(node) {
+                        console.log('   - Node API ID:', node.id, 'Text:', node.text);
+                    });
+                } else {
+                    console.log('🌳 jsTree INSTANCIA #', index, '- Estado:', 'NO INICIALIZADO');
+                }
+            });
+        }
+        
+        // Función para test manual desde consola
+        function testImagenesManual() {
+            console.log('🧪 TEST MANUAL DE IMÁGENES');
+            aplicarImagenesEjecutivos();
+        }
+        
+        // Función para forzar aplicación agresiva de imágenes
+        function forzarImagenes() {
+            console.log('💪 FORZANDO APLICACIÓN AGRESIVA DE IMÁGENES');
+            
+            // Aplicar cada 500ms durante 10 segundos
+            for (let i = 0; i < 20; i++) {
+                setTimeout(function() {
+                    console.log('💪 Intento forzado #' + (i + 1));
+                    aplicarImagenesEjecutivos();
+                    if (i % 5 === 0) { // Cada 5 intentos, usar el método super agresivo
+                        aplicarImagenesSuperAgresiva();
+                    }
+                }, i * 500);
+            }
+        }
+        
+        // Función para debug de generación de nodos
+        function debugGeneracionNodos() {
+            console.log('🔧 ==== DEBUG GENERACIÓN DE NODOS ====');
+            
+            planteles.forEach(function(plantel) {
+                console.log('🏢 PLANTEL:', plantel.nom_pla, 'ID:', plantel.id_pla);
+                
+                var ejecutivosPlantel = ejecutivos.filter(ej => ej.id_pla == plantel.id_pla);
+                console.log('   - Ejecutivos en este plantel:', ejecutivosPlantel.length);
+                
+                ejecutivosPlantel.forEach(function(ej) {
+                    console.log('   - Ejecutivo:', ej.nom_eje, 'ID:', ej.id_eje, 'Foto:', ej.fot_eje || 'SIN FOTO');
+                });
+                
+                // Generar nodos para este plantel específicamente
+                var nodosGenerados = generarNodosJsTree(ejecutivosPlantel);
+                console.log('   - Nodos generados:', nodosGenerados.length);
+                
+                nodosGenerados.forEach(function(nodo) {
+                    console.log('   - Nodo ID:', nodo.id, 'Text:', nodo.text.replace(/<[^>]*>/g, ''), 'Parent:', nodo.parent);
+                });
+            });
+        }
+        
+        // Variables globales para debug adicional
+        window.debugGeneracionNodos = debugGeneracionNodos;
+        
+        // Función para verificar estado completo del DOM
+        function verificarEstadoDOM() {
+            console.log('🔍 ==== VERIFICACIÓN COMPLETA DEL DOM ====');
+            
+            // 1. Verificar contenedores de planteles
+            var contenedoresPlanteles = $('.plantel-container');
+            console.log('Contenedores de planteles encontrados:', contenedoresPlanteles.length);
+            
+            contenedoresPlanteles.each(function(index) {
+                var container = $(this);
+                var plantelId = container.data('plantel-id');
+                var plantelTree = container.find('.plantel-tree');
+                console.log('   - Contenedor #' + index + ': Plantel ID=' + plantelId);
+                console.log('     * Tiene .plantel-tree:', plantelTree.length);
+                
+                if (plantelTree.length > 0) {
+                    var treeId = plantelTree.attr('id');
+                    console.log('     * Tree ID:', treeId);
+                    
+                    // Verificar si tiene clase jstree
+                    var tieneJsTree = plantelTree.hasClass('jstree');
+                    console.log('     * Tiene clase jstree:', tieneJsTree);
+                    
+                    // Verificar nodos
+                    var nodos = plantelTree.find('.jstree-node');
+                    console.log('     * Nodos encontrados:', nodos.length);
+                    
+                    nodos.each(function() {
+                        var nodo = $(this);
+                        var id = nodo.attr('id');
+                        var texto = nodo.find('.jstree-anchor').text().trim();
+                        console.log('       - Nodo ID: "' + id + '", Texto: "' + texto + '"');
+                    });
+                }
+            });
+            
+            // 2. Verificar todos los elementos con ID numérico
+            var elementosConIdNumerico = $('[id]').filter(function() {
+                return /^\d+$/.test(this.id);
+            });
+            
+            console.log('Elementos con ID numérico encontrados:', elementosConIdNumerico.length);
+            elementosConIdNumerico.each(function() {
+                var elemento = $(this);
+                var id = elemento.attr('id');
+                var clases = elemento.attr('class') || 'sin-clases';
+                var texto = elemento.text().trim() || 'sin-texto';
+                console.log('   - ID: "' + id + '", Clases: "' + clases + '", Texto: "' + texto.substring(0, 50) + '"');
+            });
+            
+            // 3. Verificar ejecutivos con fotos que deberían estar
+            var ejecutivosConFoto = ejecutivos.filter(ej => ej.fot_eje);
+            console.log('Ejecutivos con fotos que deberían estar en DOM:', ejecutivosConFoto.length);
+            
+            ejecutivosConFoto.forEach(function(ej) {
+                console.log('   🔎 Buscando ejecutivo:', ej.nom_eje, 'ID:', ej.id_eje);
+                
+                // Buscar de todas las formas posibles
+                var porId = $('#' + ej.id_eje);
+                var porAtributoId = $('[id="' + ej.id_eje + '"]');
+                var porTexto = $('.jstree-anchor:contains("' + ej.nom_eje + '")');
+                
+                console.log('     * Por #ID:', porId.length);
+                console.log('     * Por [id=""]:', porAtributoId.length);
+                console.log('     * Por texto:', porTexto.length);
+                
+                if (porTexto.length > 0) {
+                    porTexto.each(function() {
+                        var nodo = $(this).closest('.jstree-node');
+                        var idNodo = nodo.attr('id');
+                        console.log('     * Encontrado por texto - ID del nodo:', idNodo);
+                    });
+                }
+            });
+        }
+        
+        // Función SUPER AGRESIVA para aplicar imágenes - última línea de defensa
+        function aplicarImagenesSuperAgresiva() {
+            console.log('💪 ===== APLICACIÓN SUPER AGRESIVA DE IMÁGENES =====');
+            
+            // Buscar TODOS los anchors de jsTree en toda la página
+            var todosLosAnchors = $('.jstree-anchor');
+            console.log('Total anchors jstree encontrados:', todosLosAnchors.length);
+            
+            todosLosAnchors.each(function() {
+                var anchor = $(this);
+                var nodo = anchor.closest('.jstree-node');
+                var idNodo = nodo.attr('id');
+                
+                if (idNodo) {
+                    console.log('🔍 Revisando anchor con nodo ID:', idNodo);
+                    
+                    // Buscar ejecutivo por ID
+                    var ejecutivo = ejecutivos.find(ej => ej.id_eje == idNodo);
+                    
+                    if (ejecutivo && ejecutivo.fot_eje) {
+                        console.log('💪 APLICANDO IMAGEN AGRESIVA a:', ejecutivo.nom_eje);
+                        
+                        // Remover imagen existente si la hay
+                        anchor.find('.ejecutivo-imagen').remove();
+                        
+                        // Crear nueva imagen
+                        var imgElement = $('<img>', {
+                            src: 'uploads/' + ejecutivo.fot_eje,
+                            css: {
+                                'width': '24px',
+                                'height': '24px',
+                                'border-radius': '50%',
+                                'border': '2px solid #007bff',
+                                'object-fit': 'cover',
+                                'margin-top': '3px',
+                                'margin-right': '8px',
+                                'cursor': 'pointer',
+                                'display': 'inline-block !important',
+                                'vertical-align': 'middle',
+                                'position': 'relative',
+                                'z-index': '10'
+                            },
+                            alt: ejecutivo.nom_eje,
+                            title: 'Foto de ' + ejecutivo.nom_eje,
+                            class: 'ejecutivo-imagen',
+                            'data-ejecutivo-id': ejecutivo.id_eje
+                        });
+                        
+                        // Ocultar ícono
+                        anchor.find('.jstree-icon').hide();
+                        
+                        // Insertar imagen
+                        anchor.prepend(imgElement);
+                        
+                        console.log('💪 ✅ IMAGEN APLICADA AGRESIVAMENTE:', ejecutivo.nom_eje);
+                    }
+                }
+            });
+        }
+        
+        // Función global
+        window.aplicarImagenesSuperAgresiva = aplicarImagenesSuperAgresiva;
+        
+        // Variables globales para debug
+        window.debugEjecutivosConFotos = debugEjecutivosConFotos;
+        window.testImagenesManual = testImagenesManual;
+        window.aplicarImagenesEjecutivos = aplicarImagenesEjecutivos;
+        window.forzarImagenes = forzarImagenes;
+        window.aplicarImagenesSuperAgresiva = aplicarImagenesSuperAgresiva;
+        window.verificarEstadoDOM = verificarEstadoDOM;
+        
+        // Función para aplicar imágenes de ejecutivos (reutilizable) - Portada desde arbol_ejecutivos.php
+        function aplicarImagenesEjecutivos() {
+            console.log('🖼️ ===== APLICANDO IMÁGENES DE EJECUTIVOS EN PLANTELES =====');
+            console.log('Total de ejecutivos a revisar:', ejecutivos.length);
+            
+            var ejecutivosConFoto = ejecutivos.filter(ej => ej.fot_eje);
+            console.log('Ejecutivos con foto encontrados:', ejecutivosConFoto.length);
+            ejecutivosConFoto.forEach(ej => {
+                console.log('  - ID:', ej.id_eje, 'Nombre:', ej.nom_eje, 'Foto:', ej.fot_eje, 'Plantel:', ej.id_pla);
+            });
+            
+            ejecutivos.forEach(function(ejecutivo) {
+                if (ejecutivo.fot_eje) {
+                    console.log('🔍 Procesando ejecutivo con foto:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje, 'Foto:', ejecutivo.fot_eje);
+                    
+                    // Intentar múltiples estrategias para encontrar el nodo
+                    var nodo = null;
+                    
+                    // Estrategia 1: Selector de atributo
+                    nodo = $('[id="' + ejecutivo.id_eje + '"]');
+                    console.log('  - Estrategia 1 [id="' + ejecutivo.id_eje + '"]:', nodo.length);
+                    
+                    // Estrategia 2: ID directo
+                    if (nodo.length === 0) {
+                        nodo = $('#' + ejecutivo.id_eje);
+                        console.log('  - Estrategia 2 #' + ejecutivo.id_eje + ':', nodo.length);
+                    }
+                    
+                    // Estrategia 3: Buscar en todos los árboles específicamente
+                    if (nodo.length === 0) {
+                        $('.plantel-tree').each(function() {
+                            var nodoEnArbol = $(this).find('[id="' + ejecutivo.id_eje + '"]');
+                            if (nodoEnArbol.length > 0) {
+                                nodo = nodoEnArbol;
+                                console.log('  - Estrategia 3 encontrado en árbol:', nodo.length);
+                                return false; // Salir del each
+                            }
+                        });
+                    }
+                    
+                    // Estrategia 4: Buscar por clase jstree-node con ID
+                    if (nodo.length === 0) {
+                        nodo = $('.jstree-node[id="' + ejecutivo.id_eje + '"]');
+                        console.log('  - Estrategia 4 .jstree-node[id="' + ejecutivo.id_eje + '"]:', nodo.length);
+                    }
+                    
+                    if (nodo.length > 0) {
+                        console.log('  - ✅ Nodo encontrado en DOM');
+                        var anchor = nodo.find('.jstree-anchor');
+                        console.log('  - Anchors encontrados:', anchor.length);
+                        
+                        // Verificar que no tenga ya una imagen aplicada
+                        if (!anchor.find('.ejecutivo-imagen').length) {
+                            console.log('  - 🆕 Creando nueva imagen para:', ejecutivo.nom_eje);
+                            
+                            // Crear elemento de imagen específico para este ejecutivo
+                            var imgElement = $('<img>', {
+                                src: 'uploads/' + ejecutivo.fot_eje,
+                                css: {
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'border-radius': '50%',
+                                    'border': '2px solid #007bff',
+                                    'object-fit': 'cover',
+                                    'margin-top': '3px',
+                                    'margin-right': '8px',
+                                    'cursor': 'pointer',
+                                    'display': 'inline-block',
+                                    'vertical-align': 'middle',
+                                    'position': 'relative',
+                                    'z-index': '10'
+                                },
+                                alt: ejecutivo.nom_eje,
+                                title: 'Foto de ' + ejecutivo.nom_eje,
+                                class: 'ejecutivo-imagen',
+                                'data-ejecutivo-id': ejecutivo.id_eje
+                            });
+                            
+                            // Ocultar SOLO el ícono Font Awesome de este nodo específico
+                            var icono = anchor.find('.jstree-icon').first();
+                            if (icono.length > 0) {
+                                icono.hide();
+                            }
+                            
+                            // Insertar imagen al inicio del anchor
+                            anchor.prepend(imgElement);
+                            
+                            console.log('  - ✅ Imagen insertada para:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje, 'Archivo:', ejecutivo.fot_eje);
+                            console.log('  - ✅ Imagen DOM element:', imgElement[0]);
+                            console.log('  - ✅ Ícono oculto:', icono.is(':hidden'));
+                            
+                            console.log('Imagen aplicada a ejecutivo:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje, 'Plantel:', ejecutivo.id_pla);
+                        } else {
+                            // Ya tiene imagen, asegurar que esté visible y el ícono oculto
+                            var img = anchor.find('.ejecutivo-imagen');
+                            img.show();
+                            anchor.find('.jstree-icon').hide();
+                            console.log('  - ♻️ Imagen ya existente mantenida para:', ejecutivo.nom_eje, 'Visible:', img.is(':visible'));
+                        }
+                    } else {
+                        console.log('  - ❌ Nodo NO encontrado en DOM para:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje);
+                        console.log('  - ❌ Verificando si existe algún elemento con ese ID...');
+                        var todoElemento = $('#' + ejecutivo.id_eje);
+                        console.log('  - ❌ Elemento por ID simple:', todoElemento.length);
+                        var todosElementos = $('[id]').filter(function() { return this.id == ejecutivo.id_eje; });
+                        console.log('  - ❌ Elementos con ID coincidente:', todosElementos.length);
+                    }
+                } else {
+                    // Si el ejecutivo NO tiene foto, asegurar que su ícono esté visible
+                    var nodo = $('[id="' + ejecutivo.id_eje + '"]');
+                    if (nodo.length > 0) {
+                        var anchor = nodo.find('.jstree-anchor');
+                        // Remover cualquier imagen que pudiera haber heredado
+                        anchor.find('.ejecutivo-imagen').remove();
+                        // Asegurar que el ícono Font Awesome esté visible
+                        anchor.find('.jstree-icon').show();
+                        
+                        console.log('Ícono restaurado para ejecutivo sin foto:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje);
+                    }
+                }
+            });
+        }
+        
         function generarArbolesPorPlantel() {
             console.log('=== GENERANDO ÁRBOLES POR PLANTEL ===');
             console.log('Planteles disponibles:', planteles.length);
             console.log('Ejecutivos disponibles:', ejecutivos.length);
             
+            // Debug: verificar ejecutivos con fotos antes de generar árboles
+            var ejecutivosConFoto = ejecutivos.filter(ej => ej.fot_eje);
+            console.log('🖼️ Ejecutivos con foto ANTES de generar árboles:', ejecutivosConFoto.length);
+            ejecutivosConFoto.forEach(ej => {
+                console.log('   - ID:', ej.id_eje, 'Nombre:', ej.nom_eje, 'Plantel:', ej.id_pla, 'Foto:', ej.fot_eje);
+            });
+            
             planteles.forEach(function(plantel) {
-                //console.log('Procesando plantel:', plantel.nom_pla, '(ID:', plantel.id_pla, ')');
+                console.log('🏢 Procesando plantel:', plantel.nom_pla, '(ID:', plantel.id_pla, ')');
                 
                 var ejecutivosPlantel = ejecutivos.filter(ej => ej.id_pla == plantel.id_pla);
+                console.log('   - Ejecutivos en este plantel:', ejecutivosPlantel.length);
+                
+                // Debug: verificar ejecutivos con fotos en este plantel específico
+                var ejecutivosConFotoPlantel = ejecutivosPlantel.filter(ej => ej.fot_eje);
+                console.log('   - Ejecutivos con foto en este plantel:', ejecutivosConFotoPlantel.length);
+                ejecutivosConFotoPlantel.forEach(ej => {
+                    console.log('     * ID:', ej.id_eje, 'Nombre:', ej.nom_eje, 'Foto:', ej.fot_eje);
+                });
                 
                 var nodosTree = generarNodosJsTree(ejecutivosPlantel);
+                console.log('   - Nodos generados:', nodosTree.length);
                 
                 // Actualizar contador
                 $('#count-plantel-' + plantel.id_pla).text(ejecutivosPlantel.length);
@@ -1790,6 +2283,17 @@
                         // Expandir todos los nodos para mostrar la estructura completa
                         $(currentTreeId).jstree('open_all');
                         
+                        console.log('🌳 jsTree expandido completamente para:', currentPlantel.nom_pla);
+                        console.log('🌳 Nodos en DOM después de expandir:', $(currentTreeId).find('.jstree-node').length);
+                        
+                        // Aplicar imágenes inmediatamente después de la inicialización
+                        setTimeout(function() {
+                            console.log('🕐 TIMEOUT 200ms - Aplicando imágenes para:', currentPlantel.nom_pla);
+                            verificarEstadoDOM(); // Agregar verificación completa
+                            debugEjecutivosConFotos();
+                            aplicarImagenesEjecutivos();
+                        }, 200);
+                        
                         // Aplicar estilos adicionales para mejorar la visualización jerárquica
                         setTimeout(function() {
                             // Verificar cuántos nodos están visibles
@@ -1810,37 +2314,34 @@
                             $(currentTreeId).find('.jstree-level-4 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-check');
                             $(currentTreeId).find('.jstree-level-5 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-plus');
                             
-                            // Personalizar iconos con imágenes de ejecutivos
-                            ejecutivosPlantel.forEach(function(ejecutivo) {
-                                if (ejecutivo.fot_eje) {
-                                    // Buscar el nodo usando jsTree API en lugar de selector directo
-                                    var nodoJsTree = $(currentTreeId).jstree('get_node', ejecutivo.id_eje);
-                                    if (nodoJsTree) {
-                                        var nodoElement = $(currentTreeId).find('#' + nodoJsTree.id);
-                                        var icono = nodoElement.find('.jstree-icon');
-                                        if (icono.length > 0) {
-                                            icono.css({
-                                                'background-image': 'url(uploads/' + ejecutivo.fot_eje + ')',
-                                                'background-size': 'cover',
-                                                'background-position': 'center',
-                                                'border-radius': '50%',
-                                                'border': '2px solid #007bff',
-                                                'width': '24px',
-                                                'height': '24px',
-                                                'margin-top': '6px'
-                                            });
-                                            icono.removeClass();
-                                            icono.addClass('jstree-icon jstree-themeicon');
-                                            console.log('   - Imagen aplicada a ejecutivo:', ejecutivo.nom_eje);
-                                        }
-                                    } else {
-                                        console.warn('   - No se encontró nodo jsTree para ejecutivo:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje);
-                                    }
-                                }
-                            });
+                            // Personalizar iconos con imágenes de ejecutivos usando función mejorada
+                            aplicarImagenesEjecutivos();
                             
                             console.log('   - Clases de nivel aplicadas correctamente');
                         }, 150);
+                        
+                        // Aplicar imágenes adicionales con delays progresivos para asegurar completa renderización
+                        setTimeout(function() {
+                            console.log('🕐 TIMEOUT 500ms - Segunda aplicación de imágenes');
+                            aplicarImagenesEjecutivos();
+                        }, 500);
+                        
+                        setTimeout(function() {
+                            console.log('🕐 TIMEOUT 1000ms - Tercera aplicación de imágenes');
+                            aplicarImagenesEjecutivos();
+                        }, 1000);
+                        
+                        setTimeout(function() {
+                            console.log('🕐 TIMEOUT 2000ms - Cuarta aplicación de imágenes');
+                            aplicarImagenesEjecutivos();
+                        }, 2000);
+                        
+                        // Una aplicación final después de que todo esté estable
+                        setTimeout(function() {
+                            console.log('🕐 TIMEOUT 3000ms - Aplicación final de imágenes');
+                            aplicarImagenesEjecutivos();
+                            aplicarImagenesSuperAgresiva(); // Aplicación super agresiva
+                        }, 3000);
                     }).on('select_node.jstree', function(e, data) {
                         var ejecutivo = ejecutivos.find(ej => ej.id_eje == data.node.id);
                         if(ejecutivo) {
@@ -1873,6 +2374,15 @@
                         
                         console.log('Movimiento dentro del plantel:', currentPlantel.id_pla, 'ejecutivo:', ejecutivoId, 'nuevo padre:', nuevoPadreId);
                         moverEjecutivo(ejecutivoId, nuevoPadreId, currentPlantel.id_pla);
+                        
+                        // Reaplicar imágenes después del movimiento
+                        setTimeout(function() {
+                            aplicarImagenesEjecutivos();
+                        }, 100);
+                        
+                        setTimeout(function() {
+                            aplicarImagenesEjecutivos();
+                        }, 300);
                     }).on('dnd_start.vakata', function(e, data) {
                         console.log('DND Start desde árbol:', currentTreeId, 'plantel:', currentPlantel.id_pla);
                         // Establecer variables globales para drag & drop entre planteles
@@ -1915,10 +2425,10 @@
                 
                 var icono = ejecutivo.eli_eje == 1 ? 'fas fa-user text-success' : 'fas fa-user-slash text-danger';
                 
-                // Usar imagen del ejecutivo si existe, sino usar ícono por defecto
-                if (ejecutivo.fot_eje) {
-                    icono = 'uploads/' + ejecutivo.fot_eje;
-                }
+                // NO establecer imagen como ícono aquí - se hará en ready.jstree
+                // if (ejecutivo.fot_eje) {
+                //     icono = 'uploads/' + ejecutivo.fot_eje;
+                // }
                 
                 var badge = ejecutivo.eli_eje == 1 ? 
                     '<span class="badge badge-success ml-1">Activo</span>' : 
@@ -2314,6 +2824,16 @@
             
             // Regenerar vista inmediatamente sin delay
             generarArbolesPorPlantel();
+            
+            // Aplicar imágenes después de regenerar los árboles
+            setTimeout(function() {
+                aplicarImagenesEjecutivos();
+            }, 100);
+            
+            setTimeout(function() {
+                aplicarImagenesEjecutivos();
+            }, 300);
+            
             limpiarEstadoDrag();
             
             // Mostrar mensaje de éxito instantáneo y sutil
@@ -2360,6 +2880,11 @@
                         ejecutivo.id_pla = plantelAnterior;
                         generarArbolesPorPlantel();
                         
+                        // Reaplicar imágenes después de revertir
+                        setTimeout(function() {
+                            aplicarImagenesEjecutivos();
+                        }, 100);
+                        
                         mostrarMensajeDragDrop('✗ Error: ' + response.message, false, true);
                     }
                 },
@@ -2375,6 +2900,11 @@
                     ejecutivo.id_padre = padreAnterior;
                     ejecutivo.id_pla = plantelAnterior;
                     generarArbolesPorPlantel();
+                    
+                    // Reaplicar imágenes después de revertir por error
+                    setTimeout(function() {
+                        aplicarImagenesEjecutivos();
+                    }, 100);
                     
                     // Manejo de errores más robusto
                     var mensajeError = 'Error de conexión';
@@ -2402,6 +2932,12 @@
                                 ejecutivo.id_padre = nuevoPadreId;
                                 ejecutivo.id_pla = nuevoPlantelId;
                                 generarArbolesPorPlantel();
+                                
+                                // Reaplicar imágenes después de mantener cambios
+                                setTimeout(function() {
+                                    aplicarImagenesEjecutivos();
+                                }, 100);
+                                
                                 mostrarMensajeDragDrop('✓ Movido', true, false);
                                 return;
                             } else {
