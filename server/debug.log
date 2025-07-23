@@ -1,0 +1,64 @@
+[2025-07-23 20:08:50] REQUEST recibido: Array
+(
+    [action] => obtener_estructura_tabla
+)
+
+[2025-07-23 20:08:50] REQUEST recibido: Array
+(
+    [action] => obtener_ejecutivos
+)
+
+[2025-07-23 20:08:50] REQUEST recibido: Array
+(
+    [action] => obtener_planteles
+)
+
+[2025-07-23 20:08:51] REQUEST recibido: Array
+(
+    [action] => obtener_citas
+    [fecha_inicio] => 2025-07-16
+    [fecha_fin] => 2025-07-23
+)
+
+[2025-07-23 20:08:51] FILTRO CITAS - Parámetros recibidos:
+[2025-07-23 20:08:51] - fecha_inicio: 2025-07-16
+[2025-07-23 20:08:51] - fecha_fin: 2025-07-23
+[2025-07-23 20:08:51] - id_ejecutivo: null
+[2025-07-23 20:08:51] - id_plantel: null
+[2025-07-23 20:08:51] - tipo_ejecutivo: null
+[2025-07-23 20:08:51] - incluir_planteles_asociados RAW: not set
+[2025-07-23 20:08:51] - incluir_planteles_asociados FINAL: false
+[2025-07-23 20:08:51] REQUEST recibido: Array
+(
+    [action] => obtener_citas
+    [fecha_inicio] => 2025-07-16
+    [fecha_fin] => 2025-07-23
+    [id_ejecutivo] => 10
+    [incluir_planteles_asociados] => false
+)
+
+[2025-07-23 20:08:51] FILTRO CITAS - Parámetros recibidos:
+[2025-07-23 20:08:51] - fecha_inicio: 2025-07-16
+[2025-07-23 20:08:51] - fecha_fin: 2025-07-23
+[2025-07-23 20:08:51] - id_ejecutivo: 10
+[2025-07-23 20:08:51] - id_plantel: null
+[2025-07-23 20:08:51] - tipo_ejecutivo: null
+[2025-07-23 20:08:51] - incluir_planteles_asociados RAW: false
+[2025-07-23 20:08:51] - incluir_planteles_asociados FINAL: false
+[2025-07-23 20:08:51] - WHERE clause: c.eli_cit = 1 AND c.cit_cit >= '2025-07-16' AND c.cit_cit <= '2025-07-23'
+[2025-07-23 20:08:51] - Query final: SELECT c.id_cit, c.cit_cit, c.hor_cit, c.nom_cit, c.tel_cit, c.id_eje2, c.id_eje_admin, c.id_eje_admision, c.eli_cit, c.est_cit, c.efe_cit, c.pla_cit, e.nom_eje, e.tipo as tipo_ejecutivo, p.nom_pla 
+					 FROM cita c
+					 LEFT JOIN ejecutivo e ON c.id_eje2 = e.id_eje
+					 LEFT JOIN plantel p ON c.pla_cit = p.id_pla
+					 WHERE c.eli_cit = 1 AND c.cit_cit >= '2025-07-16' AND c.cit_cit <= '2025-07-23'
+					 ORDER BY c.cit_cit ASC, c.hor_cit ASC
+[2025-07-23 20:08:51] - Citas encontradas: 3
+[2025-07-23 20:08:51] - Solo citas propias del ejecutivo: 10
+[2025-07-23 20:08:51] - WHERE clause: c.eli_cit = 1 AND c.cit_cit >= '2025-07-16' AND c.cit_cit <= '2025-07-23' AND c.id_eje2 = 10
+[2025-07-23 20:08:51] - Query final: SELECT c.id_cit, c.cit_cit, c.hor_cit, c.nom_cit, c.tel_cit, c.id_eje2, c.id_eje_admin, c.id_eje_admision, c.eli_cit, c.est_cit, c.efe_cit, c.pla_cit, e.nom_eje, e.tipo as tipo_ejecutivo, p.nom_pla 
+					 FROM cita c
+					 LEFT JOIN ejecutivo e ON c.id_eje2 = e.id_eje
+					 LEFT JOIN plantel p ON c.pla_cit = p.id_pla
+					 WHERE c.eli_cit = 1 AND c.cit_cit >= '2025-07-16' AND c.cit_cit <= '2025-07-23' AND c.id_eje2 = 10
+					 ORDER BY c.cit_cit ASC, c.hor_cit ASC
+[2025-07-23 20:08:51] - Citas encontradas: 0

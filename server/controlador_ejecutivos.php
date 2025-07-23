@@ -105,8 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		case 'crear_ejecutivo':
 			$nom_eje = escape($_POST['nom_eje'], $connection);
 			$tel_eje = escape($_POST['tel_eje'], $connection);
-			$id_padre = isset($_POST['id_padre']) && $_POST['id_padre'] !== '' ? escape($_POST['id_padre'], $connection) : null;
-			$id_pla = isset($_POST['id_pla']) && $_POST['id_pla'] !== '' ? escape($_POST['id_pla'], $connection) : null;
+			$id_padre = isset($_POST['id_padre']) && $_POST['id_padre'] !== '' && $_POST['id_padre'] !== 'null' ? escape($_POST['id_padre'], $connection) : null;
+			$id_pla = isset($_POST['id_pla']) && $_POST['id_pla'] !== '' && $_POST['id_pla'] !== 'null' ? escape($_POST['id_pla'], $connection) : null;
 			$eli_eje = isset($_POST['eli_eje']) ? intval($_POST['eli_eje']) : 1;
 			
 			// Validaciones backend
@@ -187,8 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			$id_eje = escape($_POST['id_eje'], $connection);
 			$nom_eje = escape($_POST['nom_eje'], $connection);
 			$tel_eje = escape($_POST['tel_eje'], $connection);
-			$id_padre = isset($_POST['id_padre']) && $_POST['id_padre'] !== '' ? escape($_POST['id_padre'], $connection) : null;
-			$id_pla = isset($_POST['id_pla']) && $_POST['id_pla'] !== '' ? escape($_POST['id_pla'], $connection) : null;
+			$id_padre = isset($_POST['id_padre']) && $_POST['id_padre'] !== '' && $_POST['id_padre'] !== 'null' ? escape($_POST['id_padre'], $connection) : null;
+			$id_pla = isset($_POST['id_pla']) && $_POST['id_pla'] !== '' && $_POST['id_pla'] !== 'null' ? escape($_POST['id_pla'], $connection) : null;
 			$eli_eje = isset($_POST['eli_eje']) ? intval($_POST['eli_eje']) : 1;
 			
 			// Validaciones backend

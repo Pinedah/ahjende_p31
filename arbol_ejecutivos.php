@@ -218,15 +218,46 @@
             border: 1px solid #ddd;
         }
         
-        /* Cuando el ícono es una imagen, ajustar el tamaño */
-        .jstree-anchor .jstree-icon[style*="background-image"] {
-            width: 24px !important;
-            height: 24px !important;
-            margin-top: 3px !important;
-            border-radius: 50%;
-            border: 2px solid #007bff;
-            background-size: cover !important;
-            background-position: center !important;
+        /* Estilos específicos para imágenes reemplazadas */
+        .jstree-default .jstree-anchor img.ejecutivo-imagen {
+            vertical-align: middle;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        /* Prevenir herencia de imágenes completamente - cada nodo debe ser independiente */
+        .jstree-anchor {
+            background-image: none !important;
+        }
+        
+        /* Solo ocultar íconos Font Awesome específicos cuando hay imagen personalizada en ESE nodo específico */
+        .jstree-anchor:has(.ejecutivo-imagen) .jstree-icon.fas {
+            display: none !important;
+        }
+        
+        /* Asegurar que las imágenes de ejecutivos siempre sean visibles y no se hereden */
+        .jstree-anchor .ejecutivo-imagen {
+            display: inline-block !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        /* Prevenir que los estilos de background-image se apliquen a nodos sin imagen propia */
+        .jstree-default .jstree-anchor .jstree-icon {
+            background-image: none !important;
+        }
+        
+        /* Asegurar prioridad de las imágenes sobre íconos en nodos raíz */
+        .jstree-root-level .ejecutivo-imagen {
+            display: inline-block !important;
+            visibility: visible !important;
+            z-index: 15 !important;
+        }
+        
+        /* Ocultar íconos cuando hay imagen en nodos raíz específicamente */
+        .jstree-root-level:has(.ejecutivo-imagen) .jstree-icon {
+            display: none !important;
         }
         
         /* Estilos para el header similar a index.php */
@@ -923,6 +954,76 @@
         // FUNCIONES DE JSTREE
         // =====================================
         
+        // Función para aplicar imágenes de ejecutivos (reutilizable)
+        function aplicarImagenesEjecutivos() {
+            console.log('Aplicando imágenes de ejecutivos...');
+            
+            ejecutivos.forEach(function(ejecutivo) {
+                if (ejecutivo.fot_eje) {
+                    var nodo = $('#jstree').find('#' + ejecutivo.id_eje);
+                    
+                    if (nodo.length > 0) {
+                        var anchor = nodo.find('.jstree-anchor');
+                        
+                        // Verificar que no tenga ya una imagen aplicada
+                        if (!anchor.find('.ejecutivo-imagen').length) {
+                            // Crear elemento de imagen específico para este ejecutivo
+                            var imgElement = $('<img>', {
+                                src: 'uploads/' + ejecutivo.fot_eje,
+                                css: {
+                                    'width': '24px',
+                                    'height': '24px',
+                                    'border-radius': '50%',
+                                    'border': '2px solid #007bff',
+                                    'object-fit': 'cover',
+                                    'margin-top': '3px',
+                                    'margin-right': '8px',
+                                    'cursor': 'pointer',
+                                    'display': 'inline-block',
+                                    'vertical-align': 'middle',
+                                    'position': 'relative',
+                                    'z-index': '10'
+                                },
+                                alt: ejecutivo.nom_eje,
+                                title: 'Foto de ' + ejecutivo.nom_eje,
+                                class: 'ejecutivo-imagen',
+                                'data-ejecutivo-id': ejecutivo.id_eje
+                            });
+                            
+                            // Ocultar SOLO el ícono Font Awesome de este nodo específico
+                            var icono = anchor.find('.jstree-icon').first();
+                            if (icono.length > 0) {
+                                icono.hide();
+                            }
+                            
+                            // Insertar imagen al inicio del anchor
+                            anchor.prepend(imgElement);
+                            
+                            console.log('Imagen aplicada a ejecutivo:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje, 'Nodo raíz:', !ejecutivo.id_padre);
+                        } else {
+                            // Ya tiene imagen, asegurar que esté visible y el ícono oculto
+                            var img = anchor.find('.ejecutivo-imagen');
+                            img.show();
+                            anchor.find('.jstree-icon').hide();
+                            console.log('Imagen ya existente mantenida para:', ejecutivo.nom_eje);
+                        }
+                    }
+                } else {
+                    // Si el ejecutivo NO tiene foto, asegurar que su ícono esté visible
+                    var nodo = $('#jstree').find('#' + ejecutivo.id_eje);
+                    if (nodo.length > 0) {
+                        var anchor = nodo.find('.jstree-anchor');
+                        // Remover cualquier imagen que pudiera haber heredado
+                        anchor.find('.ejecutivo-imagen').remove();
+                        // Asegurar que el ícono Font Awesome esté visible
+                        anchor.find('.jstree-icon').show();
+                        
+                        console.log('Ícono restaurado para ejecutivo sin foto:', ejecutivo.nom_eje, 'ID:', ejecutivo.id_eje);
+                    }
+                }
+            });
+        }
+        
         function generarArbolJsTree() {
             // Generar estructura de nodos para jsTree
             nodosTree = [];
@@ -944,10 +1045,10 @@
                     tipo = 'inactive';
                 }
                 
-                // Usar imagen del ejecutivo si existe, sino usar ícono por defecto
-                if (ejecutivo.fot_eje) {
-                    icono = 'uploads/' + ejecutivo.fot_eje;
-                }
+                // NO establecer imagen como ícono aquí - se hará en ready.jstree
+                // if (ejecutivo.fot_eje) {
+                //     icono = 'uploads/' + ejecutivo.fot_eje;
+                // }
                 
                 // Construir badges de conteo de citas
                 var badgesPropias = ejecutivo.citas_propias || 0;
@@ -1032,27 +1133,7 @@
                 // Expandir todo automáticamente para mostrar la jerarquía completa
                 $('#jstree').jstree('open_all');
                 
-                // Personalizar iconos con imágenes de ejecutivos
-                ejecutivos.forEach(function(ejecutivo) {
-                    if (ejecutivo.fot_eje) {
-                        var nodo = $('#jstree').find('#' + ejecutivo.id_eje);
-                        var icono = nodo.find('.jstree-icon');
-                        icono.css({
-                            'background-image': 'url(uploads/' + ejecutivo.fot_eje + ')',
-                            'background-size': 'cover',
-                            'background-position': 'center',
-                            'border-radius': '50%',
-                            'border': '2px solid #007bff',
-                            'width': '24px',
-                            'height': '24px',
-                            'margin-top': '3px'
-                        });
-                        icono.removeClass();
-                        icono.addClass('jstree-icon jstree-themeicon');
-                    }
-                });
-                
-                // Aplicar clases específicas para mejorar la visualización
+                // Aplicar clases específicas para mejorar la visualización primero
                 setTimeout(function() {
                     $('#jstree').find('.jstree-node[aria-level="1"]').addClass('jstree-root-level');
                     $('#jstree').find('.jstree-node[aria-level="2"]').addClass('jstree-level-2');
@@ -1060,15 +1141,45 @@
                     $('#jstree').find('.jstree-node[aria-level="4"]').addClass('jstree-level-4');
                     $('#jstree').find('.jstree-node[aria-level="5"]').addClass('jstree-level-5');
                     
-                    // Añadir iconos específicos por nivel
-                    $('#jstree').find('.jstree-root-level .jstree-icon').removeClass('fas fa-user').addClass('fas fa-crown');
-                    $('#jstree').find('.jstree-level-2 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-tie');
-                    $('#jstree').find('.jstree-level-3 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-friends');
-                    $('#jstree').find('.jstree-level-4 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-check');
-                    $('#jstree').find('.jstree-level-5 .jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-plus');
+                    console.log('✅ Clases de nivel aplicadas correctamente');
+                }, 100);
+                
+                // Aplicar imágenes de ejecutivos después de las clases
+                setTimeout(function() {
+                    aplicarImagenesEjecutivos();
+                }, 200);
+                
+                // Aplicar íconos específicos por nivel SOLO para nodos sin imagen después de las imágenes
+                setTimeout(function() {
+                    // Añadir iconos específicos por nivel (solo para nodos sin imagen personalizada)
+                    $('#jstree').find('.jstree-root-level').each(function() {
+                        if (!$(this).find('.ejecutivo-imagen').length) {
+                            $(this).find('.jstree-icon').removeClass('fas fa-user').addClass('fas fa-crown');
+                        }
+                    });
+                    $('#jstree').find('.jstree-level-2').each(function() {
+                        if (!$(this).find('.ejecutivo-imagen').length) {
+                            $(this).find('.jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-tie');
+                        }
+                    });
+                    $('#jstree').find('.jstree-level-3').each(function() {
+                        if (!$(this).find('.ejecutivo-imagen').length) {
+                            $(this).find('.jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-friends');
+                        }
+                    });
+                    $('#jstree').find('.jstree-level-4').each(function() {
+                        if (!$(this).find('.ejecutivo-imagen').length) {
+                            $(this).find('.jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-check');
+                        }
+                    });
+                    $('#jstree').find('.jstree-level-5').each(function() {
+                        if (!$(this).find('.ejecutivo-imagen').length) {
+                            $(this).find('.jstree-icon').removeClass('fas fa-user').addClass('fas fa-user-plus');
+                        }
+                    });
                     
-                    console.log('✅ Clases de nivel aplicadas correctamente al árbol de ejecutivos');
-                }, 150);
+                    console.log('✅ Íconos por nivel aplicados correctamente al árbol de ejecutivos');
+                }, 300);
             });
         }
         
@@ -1087,7 +1198,7 @@
             });
             
             // P32 - Evento de clic en icono/imagen de ejecutivo para mostrar card
-            $('#jstree').on('click', '.jstree-icon', function(e) {
+            $('#jstree').on('click', '.jstree-icon, .ejecutivo-imagen', function(e) {
                 e.stopPropagation();
                 var nodeElement = $(this).closest('.jstree-node');
                 var nodeId = nodeElement.attr('id');
@@ -1100,7 +1211,7 @@
             
             // Cerrar card al hacer clic fuera
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('.ejecutivo-card, .jstree-icon').length) {
+                if (!$(e.target).closest('.ejecutivo-card, .jstree-icon, .ejecutivo-imagen').length) {
                     $('.ejecutivo-card').hide();
                 }
             });
@@ -1134,9 +1245,15 @@
                                 ejecutivo.id_padre = nuevoPadreId;
                             }
                             actualizarEstadisticas();
+                            
+                            // Reaplicar imágenes después del movimiento con más tiempo
+                            setTimeout(function() {
+                                aplicarImagenesEjecutivos();
+                                console.log('Imágenes reaplicadas después del movimiento');
+                            }, 300);
                         } else {
                             mostrarMensajeDragDrop('✗ Error: ' + response.message, false, true);
-                            // Revertir el cambio visual si falla
+                            // Solo revertir si hay error real
                             cargarEjecutivos();
                         }
                         setTimeout(function() {
@@ -1449,7 +1566,14 @@
             formData.append('action', modoEdicion ? 'actualizar_ejecutivo' : 'crear_ejecutivo');
             formData.append('nom_eje', $('#ejecutivoNombre').val().trim());
             formData.append('tel_eje', $('#ejecutivoTelefono').val().trim());
-            formData.append('id_padre', $('#ejecutivoPadre').val() || null);
+            
+            // Corregir el envío del id_padre - no enviar 'null' como string
+            var idPadre = $('#ejecutivoPadre').val();
+            if (idPadre && idPadre !== '' && idPadre !== 'null') {
+                formData.append('id_padre', idPadre);
+            }
+            // Si no tiene padre, simplemente no enviamos el campo id_padre
+            
             formData.append('eli_eje', $('#ejecutivoActivo').is(':checked') ? 1 : 0);
             
             if(modoEdicion) {
