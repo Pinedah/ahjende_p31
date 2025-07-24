@@ -810,7 +810,7 @@
                         <div class="form-group">
                             <label for="fot_eje"><i class="fas fa-image"></i> Foto (opcional):</label>
                             <input type="file" id="fot_eje" name="fot_eje" class="form-control" accept="image/*">
-                            <small class="text-muted">JPG, PNG. Máximo 5MB</small>
+                            <small class="text-muted">JPG, PNG. Máximo 50MB</small>
                         </div>
                         
                         <div class="form-group">
@@ -1220,6 +1220,7 @@
             
             // P32 - Evento de clic en icono/imagen de ejecutivo para mostrar card
             $('#jstree').on('click', '.jstree-icon, .ejecutivo-imagen', function(e) {
+                e.preventDefault(); // Prevenir comportamiento por defecto del enlace
                 e.stopPropagation();
                 var nodeElement = $(this).closest('.jstree-node');
                 var nodeId = nodeElement.attr('id');
@@ -1586,9 +1587,9 @@
                 return false;
             }
             
-            // Validar tamaño (5MB)
-            if (tamannio > 5242880) {
-                alert('La imagen no debe exceder 5MB');
+            // Validar tamaño (50MB)
+            if (tamannio > 52428800) {
+                alert('La imagen no debe exceder 50MB');
                 return false;
             }
             

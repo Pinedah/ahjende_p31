@@ -1090,7 +1090,7 @@
             
             // P32 - Cerrar card al hacer clic fuera
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('.ejecutivo-card, .jstree-icon').length) {
+                if (!$(e.target).closest('.ejecutivo-card, .jstree-icon, .ejecutivo-imagen').length) {
                     $('.ejecutivo-card').hide();
                 }
             });
@@ -2349,8 +2349,9 @@
                             mostrarInformacionEjecutivo(ejecutivo);
                             nodoSeleccionado = ejecutivo;
                         }
-                    }).on('click', '.jstree-icon', function(e) {
+                    }).on('click', '.jstree-icon, .ejecutivo-imagen', function(e) {
                         // P32 - Evento de clic en icono/imagen de ejecutivo para mostrar card
+                        e.preventDefault(); // Prevenir comportamiento por defecto del enlace
                         e.stopPropagation();
                         var nodeElement = $(this).closest('.jstree-node');
                         var nodeId = nodeElement.attr('id');

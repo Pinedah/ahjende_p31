@@ -153,8 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					break;
 				}
 				
-				if($archivo['size'] > 5242880) { // 5MB
-					echo respuestaError('La imagen no debe exceder 5MB');
+				if($archivo['size'] > 52428800) { // 50MB
+					echo respuestaError('La imagen no debe exceder 50MB');
 					break;
 				}
 				
@@ -267,8 +267,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					break;
 				}
 				
-				if($archivo['size'] > 5242880) { // 5MB
-					echo respuestaError('La imagen no debe exceder 5MB');
+				if($archivo['size'] > 52428800) { // 50MB
+					echo respuestaError('La imagen no debe exceder 50MB');
 					break;
 				}
 				
